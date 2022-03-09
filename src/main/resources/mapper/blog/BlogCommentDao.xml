@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.koko.blog.dao.BlogCommentDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.koko.blog.entity.BlogCommentEntity" id="blogCommentMap">
+        <result property="commentId" column="comment_id"/>
+        <result property="blogId" column="blog_id"/>
+        <result property="commentator" column="commentator"/>
+        <result property="email" column="email"/>
+        <result property="websiteUrl" column="website_url"/>
+        <result property="commentBody" column="comment_body"/>
+        <result property="commentCreateTime" column="comment_create_time"/>
+        <result property="commentatorIp" column="commentator_ip"/>
+        <result property="replyBody" column="reply_body"/>
+        <result property="replyCreateTime" column="reply_create_time"/>
+        <result property="commentStatus" column="comment_status"/>
+        <result property="isDeleted" column="is_deleted"/>
+    </resultMap>
+
+    <select id="getTotalComments" resultType="_int">
+        select count(*) from tb_blog_comment where is_deleted = 0
+    </select>
+
+    <select id="getCommentList" parameterType="map" resultMap="blogCommentMap">
+        select comment_id,blog_id,commentator,email,website_url,comment_body,comment_create_time,
+               commentator_ip,reply_body,reply_create_time,comment_status,is_deleted from
+            tb_blog_comment where is_deleted=0
+        <if test="start!=null and limit!=null">
+            limit #{start},#{limit}
+        </if>
+    </select>
+
+    <update id="checkDone">
+        update tb_blog_comment set comment_status = 1 where comment_id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <update id="reply" parameterType="blogCommentEntity">
+        update tb_blog_comment set   reply_body=#{replyBody},reply_create_time=#{replyCreateTime}
+        where comment_id=#{commentId}
+    </update>
+
+    <update id="deleteBatch">
+        update tb_blog_comment set is_deleted=1
+        where comment_id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+    <select id="getTotalBlogComments" parameterType="map" resultType="_int">
+        select count(comment_id) from tb_blog_comment
+        where is_deleted=0
+        <if test="blogId!=null">
+            and blog_id=#{blogId}
+        </if>
+        <if test="commentStatus!=null">
+            and comment_status=#{commentStatus}
+        </if>
+    </select>
+
+    <select id="queryCommentPage" parameterType="map" resultMap="blogCommentMap">
+        select comment_id,blog_id,commentator,email,website_url,comment_body,comment_create_time,
+               commentator_ip,reply_body,reply_create_time,comment_status,is_deleted from
+            tb_blog_comment where is_deleted=0
+        <if test="blogId!=null">
+            and blog_id=#{blogId}
+        </if>
+        <if test="commentStatus!=null">
+            and comment_status=#{commentStatus}
+        </if>
+        order by comment_id desc
+        <if test="start!=null and limit!=null">
+            limit #{start},#{limit}
+        </if>
+    </select>
+    
+    <insert id="insertBlogComment" parameterType="blogCommentEntity">
+        insert into tb_blog_comment
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="commentId != null">
+                comment_id,
+            </if>
+            <if test="blogId != null">
+                blog_id,
+            </if>
+            <if test="commentator != null">
+                commentator,
+            </if>
+            <if test="email != null">
+                email,
+            </if>
+            <if test="websiteUrl != null">
+                website_url,
+            </if>
+            <if test="commentBody != null">
+                comment_body,
+            </if>
+            <if test="commentCreateTime != null">
+                comment_create_time,
+            </if>
+            <if test="commentatorIp != null">
+                commentator_ip,
+            </if>
+            <if test="replyBody != null">
+                reply_body,
+            </if>
+            <if test="replyCreateTime != null">
+                reply_create_time,
+            </if>
+            <if test="commentStatus != null">
+                comment_status,
+            </if>
+            <if test="isDeleted != null">
+                is_deleted,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="commentId != null">
+                #{commentId,jdbcType=BIGINT},
+            </if>
+            <if test="blogId != null">
+                #{blogId,jdbcType=BIGINT},
+            </if>
+            <if test="commentator != null">
+                #{commentator,jdbcType=VARCHAR},
+            </if>
+            <if test="email != null">
+                #{email,jdbcType=VARCHAR},
+            </if>
+            <if test="websiteUrl != null">
+                #{websiteUrl,jdbcType=VARCHAR},
+            </if>
+            <if test="commentBody != null">
+                #{commentBody,jdbcType=VARCHAR},
+            </if>
+            <if test="commentCreateTime != null">
+                #{commentCreateTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="commentatorIp != null">
+                #{commentatorIp,jdbcType=VARCHAR},
+            </if>
+            <if test="replyBody != null">
+                #{replyBody,jdbcType=VARCHAR},
+            </if>
+            <if test="replyCreateTime != null">
+                #{replyCreateTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="commentStatus != null">
+                #{commentStatus,jdbcType=TINYINT},
+            </if>
+            <if test="isDeleted != null">
+                #{isDeleted,jdbcType=TINYINT},
+            </if>
+        </trim>
+    </insert>
+</mapper>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.koko.blog.dao.BlogTagDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.koko.blog.entity.BlogTagEntity" id="blogTagMap">
+        <result property="tagId" column="tag_id"/>
+        <result property="tagName" column="tag_name"/>
+        <result property="isDeleted" column="is_deleted"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+
+    <select id="getTotalTags" resultType="_int">
+        select count(*) from tb_blog_tag where is_deleted = 0
+    </select>
+
+    <select id="selectTagList"  parameterType="map" resultMap="blogTagMap">
+        select tag_id,tag_name,is_deleted,create_time
+        from tb_blog_tag where is_deleted = 0
+        order by tag_id desc
+        <if test="start !=null and limit !=null">
+            limit #{start},#{limit}
+        </if>
+    </select>
+
+
+    <select id="selectTagByName" parameterType="String" resultMap="blogTagMap">
+        select tag_id,tag_name,is_deleted,create_time from tb_blog_tag where tag_name=#{tagName}
+    </select>
+
+    <insert id="batchInsert">
+        insert into tb_blog_tag (tag_name) values
+        <foreach item="tag" collection="BlogTags"  separator="," >
+            (#{tag.tagName})
+        </foreach>
+    </insert>
+
+    <update id="batchDelete">
+    update tb_blog_tag set is_deleted = 1 where tag_id in
+    <foreach item="id" collection="array" open="(" separator="," close=")">
+       #{id}
+    </foreach>
+    </update>
+
+    <select id="selectTagByNamearray"  resultMap="blogTagMap">
+        select tag_id,tag_name,is_deleted,create_time
+        from tb_blog_tag where is_deleted = 0 and tag_name in
+        <foreach item="tagName" collection="BlogTagNames" open="(" separator="," close=")">
+            #{tagName}
+        </foreach>
+    </select>
+
+    <select id="gethotTotalTags" resultType="blogTagCount">
+        SELECT ct.tag_id,ct.tag_count,tag.tag_name
+            FROM (SELECT tag_id,COUNT(relation_id) tag_count FROM tb_blog_tag_relation tr LEFT JOIN tb_blog tb ON tb.`blog_id`=tr.`blog_id`
+                WHERE tb.`is_deleted`=0  GROUP BY tag_id ORDER BY tag_count ASC LIMIT 20) ct LEFT JOIN tb_blog_tag tag ON tag.`tag_id`=ct.tag_id WHERE tag.`is_deleted`=0
+    </select>
+
+</mapper>

@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.koko.blog.dao.BlogDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.koko.blog.entity.BlogEntity" id="blogMap">
+        <result property="blogId" column="blog_id"/>
+        <result property="blogTitle" column="blog_title"/>
+        <result property="blogSubUrl" column="blog_sub_url"/>
+        <result property="blogCoverImage" column="blog_cover_image"/>
+        <result property="blogContent" column="blog_content"/>
+        <result property="blogCategoryId" column="blog_category_id"/>
+        <result property="blogCategoryName" column="blog_category_name"/>
+        <result property="blogTags" column="blog_tags"/>
+        <result property="blogStatus" column="blog_status"/>
+        <result property="blogViews" column="blog_views"/>
+        <result property="enableComment" column="enable_comment"/>
+        <result property="isDeleted" column="is_deleted"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <select id="getTotalBlogs" resultType="_int">
+    select count(blog_id) from tb_blog where is_deleted=0
+    </select>
+
+    <select id="getTotalBlogsByQueryUtil" parameterType="map" resultType="_int">
+        select count(blog_id) from tb_blog where is_deleted=0
+        <if test="keyword!=null">
+            and blog_title like concat('%',#{keyword},'%') or blog_category_name like concat('%',#{keyword},'%')
+        </if>
+        <if test="blogStatus!=null">
+            and blog_status=#{blogStatus}
+        </if>
+        <if test="categoryId!=null">
+            and blog_category_id=#{categoryId}
+        </if>
+    </select>
+    <select id="getBlogsPageByTagId" parameterType="map" resultMap="blogMap">
+        select * from tb_blog where is_deleted=0 and blog_status=1
+        and blog_id in (select blog_id from  tb_blog_tag_relation where tag_id =#{tagId})
+        order by blog_id desc
+        <if test="start!=null and limit !=null">
+            limit #{start},#{limit}
+        </if>
+    </select>
+    <select id="getTotalBlogsByTagId" resultType="_int">
+        select count(blog_id) from tb_blog where is_deleted=0 and blog_status=1
+        and blog_id in (select blog_id from  tb_blog_tag_relation where tag_id =#{tagId})
+    </select>
+
+    <select id="selectBySubUrl" parameterType="java.lang.String" resultType="blogEntity">
+        select * from tb_blog where is_deleted=0
+        <if test="subUrl!=null">
+           and  blog_sub_url=#{subUrl}
+        </if>
+        limit 1
+    </select>
+    <select id="findBlogListByType" resultMap="blogMap">
+        select * from tb_blog where is_deleted=0 and blog_status=1
+        <if test="type!=null and type==0">
+            order by blog_views desc
+        </if>
+        <if test="type!=null and type==1">
+            order by create_time desc
+        </if>
+        <if test="limit!=null">
+            limit #{limit}
+        </if>
+    </select>
+    <select id="queryBlogPage" parameterType="Map" resultMap="blogMap">
+        select * from tb_blog where is_deleted=0
+        <if test="keyword!=null">
+            and blog_title like concat('%',#{keyword},'%') or blog_category_name like concat('%',#{keyword},'%')
+        </if>
+        <if test="blogStatus!=null">
+            and blog_status=#{blogStatus}
+        </if>
+        <if test="categoryId!=null">
+            and blog_category_id=#{categoryId}
+        </if>
+        order by blog_id desc
+      <if test="start!=null and limit!=null">
+          limit #{start},#{limit}
+      </if>
+    </select>
+
+    <update id="updateBlog" parameterType="BlogEntity">
+        update tb_blog 
+        <set>
+            <if test="blogTitle != null">
+                blog_title = #{blogTitle,jdbcType=VARCHAR},
+            </if>
+            <if test="blogSubUrl != null">
+                blog_sub_url = #{blogSubUrl,jdbcType=VARCHAR},
+            </if>
+            <if test="blogCoverImage != null">
+                blog_cover_image = #{blogCoverImage,jdbcType=VARCHAR},
+            </if>
+            <if test="blogContent != null">
+                blog_content = #{blogContent,jdbcType=LONGVARCHAR},
+            </if>
+            <if test="blogCategoryId != null">
+                blog_category_id = #{blogCategoryId,jdbcType=INTEGER},
+            </if>
+            <if test="blogCategoryName != null">
+                blog_category_name = #{blogCategoryName,jdbcType=VARCHAR},
+            </if>
+            <if test="blogTags != null">
+                blog_tags = #{blogTags,jdbcType=VARCHAR},
+            </if>
+            <if test="blogStatus != null">
+                blog_status = #{blogStatus,jdbcType=TINYINT},
+            </if>
+            <if test="blogViews != null">
+                blog_views = #{blogViews,jdbcType=BIGINT},
+            </if>
+            <if test="enableComment != null">
+                enable_comment = #{enableComment,jdbcType=TINYINT},
+            </if>
+            <if test="isDeleted != null">
+                is_deleted = #{isDeleted,jdbcType=TINYINT},
+            </if>
+            <if test="createTime != null">
+                create_time = #{createTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="blogContent != null">
+                blog_content = #{blogContent,jdbcType=LONGVARCHAR},
+            </if>
+        </set>
+            where blog_id=#{blogId}
+    </update>
+
+    <update id="batchDelete" >
+        update tb_blog set is_deleted=1 where blog_id in
+    <foreach collection="ids" item="id" open="(" separator="," close=")">
+        #{id}
+    </foreach>
+    </update>
+</mapper>
